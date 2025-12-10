@@ -1,0 +1,50 @@
+name: Publish Package to GitHub Packages
+
+on:
+  # 当推送 tag 时触发（如 v1.0.0）
+  push:
+    tags:
+      - "v*"
+  # 也可以手动触发
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@why15w"
+
+      # 安装 pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      # 安装依赖
+      - name: Install dependencies
+        run: pnpm install
+
+      # 构建
+      - name: Build
+        run: pnpm run build
+
+      # 发布到 GitHub Packages
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
