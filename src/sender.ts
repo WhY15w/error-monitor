@@ -69,10 +69,11 @@ const sendImmediately = (data: ErrorInfo[], url: string) => {
 
   // 批量上报，如果只有一条则直接发送对象，否则发送数组
   const payload = dataToSend.length === 1 ? dataToSend[0] : dataToSend;
-
   if (navigator.sendBeacon) {
+    // 使用 text/plain 避免触发 CORS 预检请求
+    // sendBeacon 不支持预检请求，application/json 会触发预检导致 CORS 错误
     const blob = new Blob([JSON.stringify(payload)], {
-      type: "application/json",
+      type: "text/plain",
     });
     navigator.sendBeacon(url, blob);
   } else {
