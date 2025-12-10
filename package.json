@@ -1,0 +1,52 @@
+{
+  "name": "@why15w/error-monitor-sdk",
+  "version": "1.0.1",
+  "description": "A lightweight front-end error monitoring SDK",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "browser": "dist/index.umd.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "demo": "node test/server.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "error-monitor",
+    "frontend",
+    "sdk",
+    "error-tracking",
+    "javascript",
+    "monitoring"
+  ],
+  "author": "WhY15w",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WhY15w/error-monitor.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "rollup": "^4.9.0",
+    "tslib": "^2.6.0",
+    "typescript": "^5.3.0"
+  }
+}

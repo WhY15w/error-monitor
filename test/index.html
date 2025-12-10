@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Error Monitor SDK 靶场</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #333;
+      }
+      .btn-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      button {
+        padding: 12px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+      button:hover {
+        background-color: #e0e0e0;
+        transform: translateY(-1px);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      .danger {
+        color: #d32f2f;
+        border-color: #d32f2f;
+        background-color: #ffebee;
+      }
+      .danger:hover {
+        background-color: #ffcdd2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎯 Error Monitor SDK 靶场</h1>
+    <p>点击下方按钮触发错误，观察<b>终端控制台</b>的报错输出。</p>
+
+    <div class="btn-group">
+      <button
+        class="danger"
+        id="btn-js">
+        💥 触发 JS 运行时错误
+      </button>
+      <button
+        class="danger"
+        id="btn-promise">
+        💥 触发 Promise Reject
+      </button>
+      <button
+        class="danger"
+        id="btn-xhr">
+        💥 触发 XHR 请求失败
+      </button>
+      <button
+        class="danger"
+        id="btn-fetch">
+        💥 触发 Fetch 请求失败
+      </button>
+      <button
+        class="danger"
+        id="btn-resource">
+        💥 触发 资源加载失败 (404)
+      </button>
+    </div>
+
+    <!-- error-monitor-sdk换成换成你发布的 npm包名 
+    <script src="https://unpkg.com/error-monitor-sdk/dist/index.umd.js"></script>
+    -->
+    <!-- 直接加载本地打包的 -->
+    <script src="../dist/index.umd.js"></script>
+
+    <script>
+      console.log("SDK 正在初始化 (CDN模式)...", ErrorMonitor);
+
+      // UMD 模式下，SDK 会挂载到 window.ErrorMonitor (在 rollup.config.js 中配置的 name)
+      ErrorMonitor.initErrorMonitor({
+        reportUrl: "http://localhost:3000/error-report",
+        projectName: "Test-Playground",
+        environment: "dev",
+      });
+
+      // 1. JS Error
+      document.getElementById("btn-js").onclick = () => {
+        const obj = {};
+        console.log(obj.notExist.func()); // 典型错误
+      };
+
+      // 2. Promise Rejection
+      document.getElementById("btn-promise").onclick = () => {
+        Promise.reject(new Error("这是一个未捕获的 Promise 错误！"));
+      };
+
+      // 3. XHR Error
+      document.getElementById("btn-xhr").onclick = () => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "http://localhost:9999/not-exist"); // 端口不存在
+        xhr.send();
+      };
+
+      // 4. Fetch Error
+      document.getElementById("btn-fetch").onclick = () => {
+        fetch("http://localhost:9999/not-exist"); // 端口不存在
+      };
+
+      // 5. Resource Error
+      document.getElementById("btn-resource").onclick = () => {
+        const img = document.createElement("img");
+        img.src = "/404-image.png"; // 图片不存在
+        document.body.appendChild(img);
+        // 稍后移除以免影响美观
+        setTimeout(() => document.body.removeChild(img), 100);
+      };
+    </script>
+  </body>
+</html>
