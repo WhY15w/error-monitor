@@ -1,6 +1,6 @@
 {
   "name": "@why15w/error-monitor-sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight front-end error monitoring SDK",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
