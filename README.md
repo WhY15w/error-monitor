@@ -20,7 +20,7 @@
 ## 安装
 
 ```bash
-npm install error-monitor-sdk
+pnpm install @why15w/error-monitor-sdk
 ```
 
 ## 使用方法
@@ -28,7 +28,7 @@ npm install error-monitor-sdk
 在你的应用入口文件（例如 `main.js` 或 `App.tsx`）中初始化 SDK。
 
 ```javascript
-import { initErrorMonitor } from "error-monitor-sdk";
+import { initErrorMonitor } from "@why15w/error-monitor-sdk";
 
 const monitor = initErrorMonitor({
   reportUrl: "https://your-monitoring-server.com/api/report", // 错误上报接口
@@ -83,32 +83,32 @@ monitor.destroy();
 1. **克隆仓库**
 
    ```bash
-   git clone https://github.com/your-username/error-monitor.git
+   git clone https://github.com/WhY15w/error-monitor.git
    cd error-monitor
    ```
 
 2. **安装依赖**
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **运行开发服务器**
 
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 4. **构建生产版本**
 
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 5. **运行演示 Demo**
    启动本地服务器以测试 SDK 功能。
    ```bash
-   npm run demo
+   pnpm run demo
    ```
    然后在浏览器中打开 `http://localhost:3000`（或控制台显示的端口）查看演示。
 
