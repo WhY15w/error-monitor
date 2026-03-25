@@ -20,7 +20,7 @@
 ## 安装
 
 ```bash
-pnpm install @why15w/error-monitor-sdk
+pnpm install @yuyuqaq/error-monitor-sdk
 ```
 
 ## 使用方法
@@ -28,7 +28,7 @@ pnpm install @why15w/error-monitor-sdk
 在你的应用入口文件（例如 `main.js` 或 `App.tsx`）中初始化 SDK。
 
 ```javascript
-import { initErrorMonitor } from "@why15w/error-monitor-sdk";
+import { initErrorMonitor } from "@yuyuqaq/error-monitor-sdk";
 
 const monitor = initErrorMonitor({
   reportUrl: "https://your-monitoring-server.com/api/report", // 错误上报接口

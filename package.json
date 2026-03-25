@@ -1,5 +1,5 @@
 {
-  "name": "@why15w/error-monitor-sdk",
+  "name": "@yuyuqaq/error-monitor-sdk",
   "version": "1.0.5",
   "description": "A lightweight front-end error monitoring SDK",
   "main": "dist/index.cjs.js",

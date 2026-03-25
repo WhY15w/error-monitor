@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://npm.pkg.github.com"
-          scope: "@why15w"
+          scope: "@yuyuqaq"
 
       # 安装 pnpm
       - name: Install pnpm
