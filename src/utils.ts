@@ -15,7 +15,7 @@ interface BrowserInfo {
  * 获取浏览器名称和版本
  */
 const getBrowserNameAndVersion = (
-  ua: string
+  ua: string,
 ): { name: string; version: string } => {
   // 检测 Edge (Chromium 版本)
   if (ua.includes("Edg/")) {

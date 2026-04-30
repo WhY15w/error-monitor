@@ -80,10 +80,9 @@ export type ErrorInfo = JsErrorInfo | NetworkErrorInfo | ResourceErrorInfo;
 /**
  * 内部配置（填充默认值后）
  */
-export interface InternalConfig
-  extends Required<
-    Omit<ErrorMonitorConfig, "ignoreErrors" | "ignoreUrls" | "customData">
-  > {
+export interface InternalConfig extends Required<
+  Omit<ErrorMonitorConfig, "ignoreErrors" | "ignoreUrls" | "customData">
+> {
   ignoreErrors: RegExp[];
   ignoreUrls: RegExp[];
   customData: Record<string, any>;

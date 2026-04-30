@@ -125,9 +125,12 @@ export const sendErrorData = (errorData: ErrorInfo, url: string) => {
   reportedErrors.add(fingerprint);
 
   // 5分钟后从去重集合中移除
-  setTimeout(() => {
-    reportedErrors.delete(fingerprint);
-  }, 5 * 60 * 1000);
+  setTimeout(
+    () => {
+      reportedErrors.delete(fingerprint);
+    },
+    5 * 60 * 1000,
+  );
 
   // 添加到队列
   errorQueue.push(errorData);

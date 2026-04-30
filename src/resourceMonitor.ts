@@ -15,7 +15,7 @@ let isInitialized = false;
 export const monitorResourceErrors = (config: InternalConfig) => {
   if (isInitialized) {
     console.warn(
-      "[ErrorMonitor] Resource error monitoring is already initialized"
+      "[ErrorMonitor] Resource error monitoring is already initialized",
     );
     return;
   }

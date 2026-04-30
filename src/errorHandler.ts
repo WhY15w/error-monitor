@@ -17,7 +17,7 @@ let isInitialized = false;
 export const monitorJavaScriptErrors = (config: InternalConfig) => {
   if (isInitialized) {
     console.warn(
-      "[ErrorMonitor] JavaScript error monitoring is already initialized"
+      "[ErrorMonitor] JavaScript error monitoring is already initialized",
     );
     return;
   }

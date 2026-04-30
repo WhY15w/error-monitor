@@ -66,7 +66,7 @@ const normalizeConfig = (config: ErrorMonitorConfig): InternalConfig => {
 export const initErrorMonitor = (config: ErrorMonitorConfig) => {
   if (isInitialized) {
     console.warn(
-      "[ErrorMonitor] Already initialized. Call destroy() first to reinitialize."
+      "[ErrorMonitor] Already initialized. Call destroy() first to reinitialize.",
     );
     return {
       destroy: destroyErrorMonitor,

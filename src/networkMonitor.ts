@@ -15,7 +15,7 @@ let isInitialized = false;
 export const monitorNetworkErrors = (config: InternalConfig) => {
   if (isInitialized) {
     console.warn(
-      "[ErrorMonitor] Network error monitoring is already initialized"
+      "[ErrorMonitor] Network error monitoring is already initialized",
     );
     return;
   }
