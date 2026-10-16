@@ -5,9 +5,12 @@ export default {
   input: "src/index.ts", // 入口文件
   output: [
     // 1. CJS 格式 (给 Node.js 或旧版构建工具用)
+    // 注意：包内声明了 "type": "module"，CJS 产物必须使用 .cjs 扩展名，
+    // 否则会被 Node 当作 ESM 解析，require 得到空对象
     {
-      file: "dist/index.cjs.js",
+      file: "dist/index.cjs",
       format: "cjs",
+      exports: "named",
       sourcemap: true,
     },
     // 2. ESM 格式 (给现代构建工具如 Vite/Webpack 用)
