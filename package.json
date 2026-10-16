@@ -1,6 +1,6 @@
 {
   "name": "@yuyuqaq/error-monitor-sdk",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "description": "A lightweight front-end error monitoring SDK",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
