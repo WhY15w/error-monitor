@@ -1,166 +1,64 @@
 /**
- * 浏览器信息接口
+ * 取资源加载错误的出错元素
+ * 资源错误的 event.target 是具体元素，JS 运行时错误的 target 是 window
  */
-interface BrowserInfo {
-  browserName: string;
-  browserVersion: string;
-  osName: string;
-  osVersion: string;
-  deviceType: string;
-  screenResolution: string;
-  language: string;
-}
+export const resourceErrorTarget = (event: Event): Element | null =>
+  event.target instanceof Element ? event.target : null;
 
 /**
- * 获取浏览器名称和版本
+ * 从任意 rejection reason 中提取可读消息
+ * reason 可能不是 Error（字符串、对象、null 等）
  */
-const getBrowserNameAndVersion = (
-  ua: string,
-): { name: string; version: string } => {
-  // 检测 Edge (Chromium 版本)
-  if (ua.includes("Edg/")) {
-    const match = ua.match(/Edg\/(\d+)/);
-    return { name: "Edge", version: match ? match[1] : "" };
+export const getErrorMessage = (reason: unknown): string => {
+  if (typeof reason === "string") {
+    return reason || "Unknown Promise Error";
   }
 
-  // 检测 Opera
-  if (ua.includes("OPR/")) {
-    const match = ua.match(/OPR\/(\d+)/);
-    return { name: "Opera", version: match ? match[1] : "" };
+  if (reason instanceof Error) {
+    return reason.message || String(reason);
   }
 
-  // 检测 Chrome
-  if (ua.includes("Chrome/")) {
-    const match = ua.match(/Chrome\/(\d+)/);
-    return { name: "Chrome", version: match ? match[1] : "" };
-  }
-
-  // 检测 Safari
-  if (ua.includes("Safari/") && !ua.includes("Chrome")) {
-    const match = ua.match(/Version\/(\d+)/);
-    return { name: "Safari", version: match ? match[1] : "" };
-  }
-
-  // 检测 Firefox
-  if (ua.includes("Firefox/")) {
-    const match = ua.match(/Firefox\/(\d+)/);
-    return { name: "Firefox", version: match ? match[1] : "" };
-  }
-
-  // 检测 IE
-  if (ua.includes("MSIE") || ua.includes("Trident/")) {
-    if (ua.includes("MSIE")) {
-      const match = ua.match(/MSIE (\d+)/);
-      return { name: "IE", version: match ? match[1] : "" };
+  if (reason && typeof reason === "object") {
+    const message = (reason as { message?: unknown }).message;
+    if (typeof message === "string" && message) {
+      return message;
     }
-    const tem = /\brv[ :]+(\d+)/g.exec(ua);
-    return { name: "IE", version: tem ? tem[1] : "" };
+    try {
+      return JSON.stringify(reason) ?? String(reason);
+    } catch {
+      return Object.prototype.toString.call(reason);
+    }
   }
 
-  return { name: "Unknown", version: "" };
+  if (reason === undefined) {
+    return "Unknown Promise Error";
+  }
+
+  return String(reason);
 };
 
 /**
- * 获取操作系统名称和版本
+ * 从任意值中提取堆栈信息
  */
-const getOSInfo = (ua: string): { name: string; version: string } => {
-  // Windows
-  if (ua.includes("Windows")) {
-    const match = ua.match(/Windows NT (\d+\. ?\d*)/);
-    const versionMap: Record<string, string> = {
-      "10.0": "10/11",
-      "6.3": "8.1",
-      "6.2": "8",
-      "6.1": "7",
-      "6.0": "Vista",
-      "5.1": "XP",
-    };
-    const ntVersion = match ? match[1] : "";
-    return { name: "Windows", version: versionMap[ntVersion] || ntVersion };
+export const getErrorStack = (reason: unknown): string | null => {
+  if (!reason || typeof reason !== "object") {
+    return null;
   }
 
-  // macOS
-  if (ua.includes("Mac OS X")) {
-    const match = ua.match(/Mac OS X (\d+[._]\d+[._]?\d*)/);
-    const version = match ? match[1].replace(/_/g, ".") : "";
-    return { name: "macOS", version };
-  }
-
-  // iOS
-  if (ua.includes("iPhone") || ua.includes("iPad") || ua.includes("iPod")) {
-    const match = ua.match(/OS (\d+[._]\d+[._]?\d*)/);
-    const version = match ? match[1].replace(/_/g, ".") : "";
-    return { name: "iOS", version };
-  }
-
-  // Android
-  if (ua.includes("Android")) {
-    const match = ua.match(/Android (\d+\. ?\d*\. ?\d*)/);
-    return { name: "Android", version: match ? match[1] : "" };
-  }
-
-  // Linux
-  if (ua.includes("Linux")) {
-    return { name: "Linux", version: "" };
-  }
-
-  return { name: "Unknown", version: "" };
+  const stack = (reason as { stack?: unknown }).stack;
+  return typeof stack === "string" && stack ? stack : null;
 };
 
 /**
- * 获取设备类型
+ * 执行监控自身的逻辑并吞掉异常
+ * 监控代码不允许抛出异常影响宿主应用
  */
-const getDeviceType = (ua: string): string => {
-  if (/tablet|ipad|playbook|silk/i.test(ua)) {
-    return "Tablet";
+export const safeRun = (fn: () => void): void => {
+  try {
+    fn();
+  } catch (error) {
+    if (typeof console !== "undefined") {
+      console.warn("[ErrorMonitor] internal error:", error);
+    }
   }
-  if (
-    /mobile|iphone|ipod|android.*mobile|windows.*phone|blackberry/i.test(ua)
-  ) {
-    return "Mobile";
-  }
-  return "Desktop";
-};
-
-/**
- * 获取屏幕分辨率
- */
-const getScreenResolution = (): string => {
-  if (typeof window !== "undefined" && window.screen) {
-    return `${window.screen.width}x${window.screen.height}`;
-  }
-  return "";
-};
-
-/**
- * 获取浏览器语言
- */
-const getLanguage = (): string => {
-  if (typeof navigator !== "undefined") {
-    return navigator.language || (navigator as any).userLanguage || "";
-  }
-  return "";
-};
-
-/**
- * 获取完整的浏览器信息
- * 解析 userAgent 获取浏览器、操作系统、设备等信息
- *
- * @returns {BrowserInfo} 包含完整浏览器信息的对象
- */
-export const getBrowserInfo = (): BrowserInfo => {
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-
-  const browser = getBrowserNameAndVersion(ua);
-  const os = getOSInfo(ua);
-
-  return {
-    browserName: browser.name,
-    browserVersion: browser.version,
-    osName: os.name,
-    osVersion: os.version,
-    deviceType: getDeviceType(ua),
-    screenResolution: getScreenResolution(),
-    language: getLanguage(),
-  };
 };

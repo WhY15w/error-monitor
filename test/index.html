@@ -2,127 +2,179 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Error Monitor SDK 靶场</title>
     <style>
+      :root {
+        --border: #dcdfe6;
+        --ok: #1a7f37;
+        --fail: #d32f2f;
+        --muted: #666;
+      }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Helvetica, Arial, sans-serif;
         padding: 20px;
-        max-width: 800px;
+        max-width: 960px;
         margin: 0 auto;
+        color: #222;
       }
       h1 {
-        color: #333;
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      h2 {
+        font-size: 16px;
+        margin-top: 28px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 6px;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
       }
       .btn-group {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
       }
       button {
-        padding: 12px 20px;
-        font-size: 14px;
+        padding: 10px 14px;
+        font-size: 13px;
         cursor: pointer;
-        background-color: #f0f0f0;
-        border: 1px solid #ccc;
+        background-color: #f6f6f6;
+        border: 1px solid var(--border);
         border-radius: 6px;
-        transition: all 0.2s;
+        transition: background-color 0.15s;
       }
       button:hover {
-        background-color: #e0e0e0;
-        transform: translateY(-1px);
+        background-color: #ececec;
       }
-      button:active {
-        transform: translateY(1px);
+      button.primary {
+        background-color: #1f6feb;
+        border-color: #1f6feb;
+        color: #fff;
+        font-weight: 600;
       }
-      .danger {
-        color: #d32f2f;
-        border-color: #d32f2f;
-        background-color: #ffebee;
+      button.primary:hover {
+        background-color: #1a5fd0;
       }
-      .danger:hover {
-        background-color: #ffcdd2;
+      button:disabled {
+        opacity: 0.5;
+        cursor: progress;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 13px;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #fafafa;
+        font-weight: 600;
+      }
+      .result-ok {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .result-fail {
+        color: var(--fail);
+        font-weight: 600;
+      }
+      #summary {
+        margin-top: 12px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      #log {
+        margin-top: 10px;
+        background: #111;
+        color: #d5d5d5;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        padding: 10px;
+        border-radius: 6px;
+        max-height: 220px;
+        overflow: auto;
+        white-space: pre-wrap;
+      }
+      code {
+        background: #f2f2f2;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 12px;
       }
     </style>
   </head>
   <body>
     <h1>🎯 Error Monitor SDK 靶场</h1>
-    <p>点击下方按钮触发错误，观察<b>终端控制台</b>的报错输出。</p>
+    <p class="hint">
+      上报接收端：<code>http://localhost:3000/error-report</code>，原始数据见
+      <a href="/__reports" target="_blank">/__reports</a>。<br />
+      手动按钮用于观察终端输出；「运行全部校验」会依次触发各类场景，并自动核对
+      上报结果（含应答抑制、聚合计数等）。
+    </p>
 
+    <h2>手动触发</h2>
     <div class="btn-group">
-      <button
-        class="danger"
-        id="btn-js">
-        💥 触发 JS 运行时错误
-      </button>
-      <button
-        class="danger"
-        id="btn-promise">
-        💥 触发 Promise Reject
-      </button>
-      <button
-        class="danger"
-        id="btn-xhr">
-        💥 触发 XHR 请求失败
-      </button>
-      <button
-        class="danger"
-        id="btn-fetch">
-        💥 触发 Fetch 请求失败
-      </button>
-      <button
-        class="danger"
-        id="btn-resource">
-        💥 触发 资源加载失败 (404)
-      </button>
+      <button class="danger" id="btn-js">💥 JS 运行时错误</button>
+      <button id="btn-promise">💥 Promise Reject</button>
+      <button id="btn-xhr">💥 XHR 请求失败</button>
+      <button id="btn-fetch">💥 Fetch 请求失败</button>
+      <button id="btn-fetch-abort">🚫 Fetch 主动取消（不应上报）</button>
+      <button id="btn-fetch-opaque">🚫 Fetch opaque 响应（不应上报）</button>
+      <button id="btn-resource">💥 资源加载失败 (404)</button>
+      <button id="btn-ws">💥 WebSocket 连接失败</button>
+      <button id="btn-ws-abrupt">💥 WebSocket 异常断开</button>
+      <button id="btn-sse">💥 SSE 连接终止</button>
+      <button id="btn-ignored">🚫 命中 ignoreErrors（不应上报）</button>
     </div>
 
+    <h2>压力与边界</h2>
+    <p class="hint">
+      用于观察批量/聚合路径的开销：同源错误只保留一条记录并累计次数；唯一错误按
+      <code>maxCacheSize</code> 分批即时上报；超长负载会分片，避免 beacon 64KB 上限导致整体丢弃。
+    </p>
+    <div class="btn-group">
+      <button id="btn-stress-dup">2000 条同源错误（聚合）</button>
+      <button id="btn-stress-uniq">1200 条唯一错误（批量）</button>
+      <button id="btn-stress-chunk">40 条大负载（分片）</button>
+    </div>
+
+    <h2>自动化校验</h2>
+    <p class="hint">
+      会依次触发下列场景，然后拉取上报结果做断言。<br />
+      预期行为：JS 错误同行重复上报的 <code>count</code> 合计为 2；主动取消的 fetch、opaque
+      响应、命中忽略规则的错误一律不上报；重复 <code>open</code> 的 XHR 只上报一次；
+      SSE 自动重连只上报一条并累计次数；两轮累计的 <code>count</code> 与本轮实际发生次数一致；<code>destroy()</code> 后恢复全部原生实现。
+    </p>
+    <button class="primary" id="btn-run">▶ 运行全部校验</button>
+
+    <table id="results">
+      <thead>
+        <tr>
+          <th style="width: 34%">校验项</th>
+          <th style="width: 14%">期望</th>
+          <th style="width: 14%">实际</th>
+          <th style="width: 10%">结果</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="summary"></div>
+    <div id="log"></div>
+
     <script src="../dist/index.umd.js"></script>
-
-    <script>
-      console.log("SDK 正在初始化 (CDN模式)...", ErrorMonitor);
-
-      // UMD 模式下，SDK 会挂载到 window.ErrorMonitor (在 rollup.config.js 中配置的 name)
-      ErrorMonitor.initErrorMonitor({
-        reportUrl: "http://localhost:3000/error-report",
-        projectName: "Test-Playground",
-        environment: "dev",
-      });
-
-      // 1. JS Error
-      document.getElementById("btn-js").onclick = () => {
-        const obj = {};
-        console.log(obj.notExist.func()); // 典型错误
-      };
-
-      // 2. Promise Rejection
-      document.getElementById("btn-promise").onclick = () => {
-        Promise.reject(new Error("这是一个未捕获的 Promise 错误！"));
-      };
-
-      // 3. XHR Error
-      document.getElementById("btn-xhr").onclick = () => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", "http://localhost:9999/not-exist"); // 端口不存在
-        xhr.send();
-      };
-
-      // 4. Fetch Error
-      document.getElementById("btn-fetch").onclick = () => {
-        fetch("http://localhost:9999/not-exist"); // 端口不存在
-      };
-
-      // 5. Resource Error
-      document.getElementById("btn-resource").onclick = () => {
-        const img = document.createElement("img");
-        img.src = "/404-image.png";
-        document.body.appendChild(img);
-        setTimeout(() => document.body.removeChild(img), 100);
-      };
-    </script>
+    <script type="module" src="./harness/main.js"></script>
   </body>
 </html>

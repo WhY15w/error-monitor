@@ -1,99 +1,75 @@
+import { errorEnvelope } from "./errorInfo";
+import { createMonitor } from "./lifecycle";
 import { sendErrorData } from "./sender";
-import type { InternalConfig, JsErrorInfo } from "./types";
-
-let originalOnError: OnErrorEventHandler | null = null;
-let originalOnUnhandledRejection:
-  | ((event: PromiseRejectionEvent) => any)
-  | null = null;
-
-let isInitialized = false;
+import {
+  getErrorMessage,
+  getErrorStack,
+  resourceErrorTarget,
+  safeRun,
+} from "./utils";
+import type { JsErrorInfo } from "./types";
 
 /**
  * 开启 JavaScript 错误监控
  * 监听并上报全局的 JavaScript 运行时错误和未处理的 Promise 异常
  *
- * @param {InternalConfig} config - 监控配置
+ * 使用 addEventListener 而非覆盖 window.onerror，因此不会与业务自身的
+ * window.onerror / onunhandledrejection 互相覆盖
  */
-export const monitorJavaScriptErrors = (config: InternalConfig) => {
-  if (isInitialized) {
-    console.warn(
-      "[ErrorMonitor] JavaScript error monitoring is already initialized",
-    );
-    return;
-  }
-
-  const { reportUrl, projectName, environment } = config;
-
-  // 保存原有的 onerror 处理函数，防止覆盖
-  originalOnError = window.onerror;
-
+const monitor = createMonitor("JavaScript error monitoring", (config) => {
   /**
-   *  捕获未处理的 JavaScript 错误
+   * 捕获未处理的 JavaScript 错误
    */
-  window.onerror = (message, source, lineno, colno, error) => {
-    const errorInfo: JsErrorInfo = {
-      message: String(message),
-      source,
-      lineno,
-      colno,
-      stack: error ? error.stack : null,
-      projectName,
-      environment,
-      errorType: "JavaScript Error",
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-    };
-
-    // 上报错误数据
-    sendErrorData(errorInfo, reportUrl);
-
-    // 如果原来有 onerror 处理函数，继续执行它
-    if (originalOnError) {
-      return originalOnError(message, source, lineno, colno, error);
+  const errorListener = (event: ErrorEvent) => {
+    // 资源加载错误由资源监控模块处理
+    if (resourceErrorTarget(event)) {
+      return;
     }
-  };
 
-  // 保存原有的处理函数
-  originalOnUnhandledRejection = window.onunhandledrejection;
+    safeRun(() => {
+      const error = event.error;
+      const errorInfo: JsErrorInfo = {
+        ...errorEnvelope(config),
+        // 跨域脚本未配置 CORS 时，message 只能是 "Script error."
+        message: String(
+          event.message || (error && error.message) || "Unknown error",
+        ),
+        source: event.filename || undefined,
+        lineno: event.lineno || undefined,
+        colno: event.colno || undefined,
+        stack: getErrorStack(error),
+        errorType: "JavaScript Error",
+        url: window.location.href,
+      };
+
+      sendErrorData(errorInfo);
+    });
+  };
 
   // 捕获未处理的 Promise 错误
-  window.onunhandledrejection = (event) => {
-    const reason = (event as any).reason;
-    const errorInfo: JsErrorInfo = {
-      message: reason
-        ? reason.message || String(reason)
-        : "Unknown Promise Error",
-      stack: reason && reason.stack ? reason.stack : null,
-      projectName,
-      environment,
-      errorType: "Unhandled Promise Rejection",
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-    };
+  const rejectionListener = (event: PromiseRejectionEvent) => {
+    safeRun(() => {
+      const reason = event.reason;
+      const errorInfo: JsErrorInfo = {
+        ...errorEnvelope(config),
+        message: getErrorMessage(reason),
+        stack: getErrorStack(reason),
+        errorType: "Unhandled Promise Rejection",
+        url: window.location.href,
+      };
 
-    // 上报错误数据
-    sendErrorData(errorInfo, reportUrl);
-
-    // 如果原来有处理函数，继续执行它
-    if (originalOnUnhandledRejection) {
-      return originalOnUnhandledRejection.call(window, event);
-    }
+      sendErrorData(errorInfo);
+    });
   };
 
-  isInitialized = true;
-};
+  window.addEventListener("error", errorListener, true);
+  window.addEventListener("unhandledrejection", rejectionListener);
 
-/**
- * 停止 JavaScript 错误监控，恢复原有处理函数
- */
-export const stopJavaScriptErrorMonitor = () => {
-  if (!isInitialized) return;
+  return () => {
+    window.removeEventListener("error", errorListener, true);
+    window.removeEventListener("unhandledrejection", rejectionListener);
+  };
+});
 
-  window.onerror = originalOnError;
-  window.onunhandledrejection = originalOnUnhandledRejection;
-  originalOnError = null;
-  originalOnUnhandledRejection = null;
-  isInitialized = false;
-};
+export const monitorJavaScriptErrors = monitor.start;
+export const stopJavaScriptErrorMonitor = monitor.stop;
